@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
+from fastapi import FastAPI, Path, Query, Depends, HTTPException, status
 
 from schemas import UserResponse, UserModel
 from db import get_db
@@ -42,10 +42,37 @@ async def read_users(skip: int = 0, limit: int = Query(default=10, le=100, ge=10
 
 
 @app.get("/users/{user_id}")
-async def read_user(note_id: int = Path(description="The ID of the note to get", gt=0, le=10),
-                    db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == note_id).first()
+async def read_user(user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
     return user
 
+@app.put("/users/{user_id}")
+async def update_user(body:UserModel, user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+    user.email = body.email
+    db.commit()
+    db.refresh(user)
+    return user
+
+@app.patch("/users/{user_id}")
+async def update_user(body:UserModel, user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+    user.email = body.email
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.delete("/users/{user_id}")
+async def delete_user(user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+    db.delete(user)
+    db.commit()
