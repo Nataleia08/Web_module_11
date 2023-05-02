@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
 from schemas import UserResponse, UserModel
+from db import get_db
+from models import User
 
 app = FastAPI()
 
@@ -10,14 +12,40 @@ def root():
     return {"message": "Welcome to FastAPI!"}
 
 @app.get("/api/healthchecker")
-def healthchecker():
-    pass
+def healthchecker(db: Session = Depends(get_db)):
+    try:
+        # Make request
+        result = db.execute("SELECT 1").fetchone()
+        if result is None:
+            raise HTTPException(status_code=500, detail="Database is not configured correctly")
+        return {"message": "Welcome to FastAPI!"}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Error connecting to the database")
 
 @app.post("/users", response_model=UserResponse)
 async def create_user(body:UserModel, db:Session = Depends(get_db)):
     user = db.query(User).filter_by(email = body.email).first()
     if user:
-        raise HTTPExeption(status_code = status.HTTP_409_CONFLICT)
-    return {}
+        raise HTTPExeption(status_code = status.HTTP_409_CONFLICT, detail = "This email is exists!")
+    user = User(email = body.email)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 @app.get("/users")
+async def read_users(skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
+    users = db.query(User).offset(skip).limit(limit).all()
+    return users
+
+
+@app.get("/users/{user_id}")
+async def read_user(note_id: int = Path(description="The ID of the note to get", gt=0, le=10),
+                    db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == note_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+    return user
+

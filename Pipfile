@@ -8,6 +8,7 @@ fastapi = "*"
 unicorn = "*"
 uvicorn = "*"
 sqlalchemy = "*"
+psycopg2 = "*"
 
 [dev-packages]
 
