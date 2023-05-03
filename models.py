@@ -1,6 +1,6 @@
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
-from db import Base
+from db import Base, engine
 
 # Ім'я
 # Прізвище
@@ -21,4 +21,4 @@ class User():
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
 
-Base.metadata.create_all()
+Base.metadata.create_all(bind=engine)
