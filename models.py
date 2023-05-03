@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, func, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from db import Base, engine
 
@@ -9,7 +9,7 @@ from db import Base, engine
 # День народження
 # Додаткові дані (необов'язково)
 
-class User():
+class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key = True, index = True)
@@ -20,5 +20,7 @@ class User():
     day_birthday = Column(DateTime)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default = func.now())
+    update_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 Base.metadata.create_all(bind=engine)

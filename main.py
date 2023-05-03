@@ -28,7 +28,7 @@ async def create_user(body:UserModel, db:Session = Depends(get_db)):
     user = db.query(User).filter_by(email = body.email).first()
     if user:
         raise HTTPExeption(status_code = status.HTTP_409_CONFLICT, detail = "This email is exists!")
-    user = User(email = body.email)
+    user = User(**body.dict())
     db.add(user)
     db.commit()
     db.refresh(user)
