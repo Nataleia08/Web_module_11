@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, func, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, func, DateTime, ForeignKey, Integer, String, Date
 from sqlalchemy.orm import relationship
 from db import Base, engine
 
@@ -17,7 +17,7 @@ class User(Base):
     last_name = Column('last_name',String(length=50))
     email = Column('email', String(length=150), unique=True)
     phone_number = Column('phone', String(length=150))
-    day_birthday = Column('birthday', DateTime)
+    day_birthday = Column('birthday', Date)
     hashed_password = Column('password', String)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())

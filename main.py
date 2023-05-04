@@ -4,6 +4,7 @@ from fastapi import FastAPI, Path, Query, Depends, HTTPException, status
 from schemas import UserResponse, UserModel
 from db import get_db
 from models import User
+from repository.users import list_birthday
 
 app = FastAPI()
 
@@ -76,3 +77,15 @@ async def delete_user(user_id: int = Path(ge=1), db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
     db.delete(user)
     db.commit()
+
+
+@app.get("/birthdays")
+async def read_users(skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
+    users = list_birthday()
+    return users
+
+
+@app.get("/search")
+async def read_users(skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
+    users = db.query(User).offset(skip).limit(limit).all()
+    return users
