@@ -1,15 +1,16 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, PastDate
 
 class UserModel(BaseModel):
     email: EmailStr
-    firs_name: str
+    first_name: str
     last_name: str
     phone_number: str
+    day_birthday: PastDate
 
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
-    firs_name: str
+    first_name: str
     last_name: str
     phone_number: str
     day_birthday: str

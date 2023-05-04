@@ -12,15 +12,16 @@ from db import Base, engine
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key = True, index = True)
-    firs_name = Column(String)
-    last_name = Column(String)
-    email = Column(String, unique=True)
-    phone_number = Column(String)
-    day_birthday = Column(DateTime)
-    hashed_password = Column(String)
+    id = Column('id',Integer, primary_key = True, index = True)
+    first_name = Column('first_name', String(length=50))
+    last_name = Column('last_name',String(length=50))
+    email = Column('email', String(length=150), unique=True)
+    phone_number = Column('phone', String(length=150))
+    day_birthday = Column('birthday', DateTime)
+    hashed_password = Column('password', String)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default = func.now())
+    created_at = Column(DateTime, default=func.now())
     update_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
 
 Base.metadata.create_all(bind=engine)

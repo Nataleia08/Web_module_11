@@ -9,6 +9,7 @@ unicorn = "*"
 uvicorn = "*"
 sqlalchemy = "*"
 psycopg2 = "*"
+alembic = "*"
 
 [dev-packages]
 
