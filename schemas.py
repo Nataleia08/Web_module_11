@@ -19,8 +19,4 @@ class UserResponse(BaseModel):
     class Config():
         orm_mode = True
 
-class SearchUserRequest(BaseModel):
-    email: EmailStr
-    first_name: str
-    last_name: str
 

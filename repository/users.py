@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from
+from datetime import datetime
 
-async def list_birthday():
-    pass
+def birthday_in_this_year(date_birthday: datetime):
+    new_date = datetime(year=2023, month=date_birthday.month, day=date_birthday.day)
+    return new_date

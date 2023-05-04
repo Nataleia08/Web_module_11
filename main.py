@@ -4,7 +4,7 @@ from fastapi import FastAPI, Path, Query, Depends, HTTPException, status
 from schemas import UserResponse, UserModel
 from db import get_db
 from models import User
-from repository.users import list_birthday
+from datetime import datetime, timedelta
 
 app = FastAPI()
 
@@ -28,7 +28,7 @@ def healthchecker(db: Session = Depends(get_db)):
 async def create_user(body:UserModel, db:Session = Depends(get_db)):
     user = db.query(User).filter_by(email = body.email).first()
     if user:
-        raise HTTPExeption(status_code = status.HTTP_409_CONFLICT, detail = "This email is exists!")
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "This email is exists!")
     user = User(**body.dict())
     db.add(user)
     db.commit()
@@ -80,12 +80,26 @@ async def delete_user(user_id: int = Path(ge=1), db: Session = Depends(get_db)):
 
 
 @app.get("/birthdays")
-async def read_users(skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
-    users = list_birthday()
+async def read_users(days:int = 7, skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
+    list_users = []
+    for i in range(days):
+        new_days = (datetime.now() + timedelta(days=i)).day
+        users = db.query(User).filter(datetime(year=2023, month=User.day_birthday.month, day=User.day_birthday.day).day == new_days).offset(skip).limit(limit).all()
+        list_users.append(users)
+    return list_users
+
+
+@app.get("/search/email")
+async def search_users(email: str, db: Session = Depends(get_db)):
+    users = db.query(User).filter(User.email == email).all()
     return users
 
+@app.get("/search/first_name")
+async def search_users(first_name: str, db: Session = Depends(get_db)):
+    users = db.query(User).filter(User.first_name == first_name).all()
+    return users
 
-@app.get("/search")
-async def read_users(skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
-    users = db.query(User).offset(skip).limit(limit).all()
+@app.get("/search/last_name")
+async def search_users(last_name: str, db: Session = Depends(get_db)):
+    users = db.query(User).filter(User.last_name == last_name).all()
     return users
