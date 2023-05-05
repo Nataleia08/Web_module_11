@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, PastDate, Field, FutureDate
 from datetime import datetime, date
+from typing import Optional
 
 class UserModel(BaseModel):
     email: EmailStr
@@ -23,5 +24,3 @@ class UserResponse(BaseModel):
 
     class Config():
         orm_mode = True
-
-

@@ -4,7 +4,7 @@ from fastapi import FastAPI, Path, Query, Depends, HTTPException, status
 from schemas import UserResponse, UserModel
 from db import get_db
 from models import User
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from repository.users import birthday_in_this_year
 from typing import List
 
@@ -14,17 +14,6 @@ app = FastAPI()
 def root():
     return {"message": "Welcome to API!"}
 
-# @app.get("/api/healthchecker")
-# def healthchecker(db: Session = Depends(get_db)):
-#     try:
-#         # Make request
-#         result = db.execute("SELECT 1").fetchone()
-#         if result is None:
-#             raise HTTPException(status_code=500, detail="Database is not configured correctly")
-#         return {"message": "Welcome to API!"}
-#     except Exception as e:
-#         print(e)
-#         raise HTTPException(status_code=500, detail="Error connecting to the database")
 
 @app.post("/users", response_model=UserResponse, tags=["users"])
 async def create_user(body:UserModel, db:Session = Depends(get_db)):
@@ -57,17 +46,36 @@ async def update_user(body:UserModel, user_id: int = Path(description="The ID of
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+    if db.query(User).filter(User.email == body.email).first():
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "This email is exists!")
     user.email = body.email
+    user.first_name = body.first_name
+    user.last_name = body.last_name
+    user.day_birthday = body.day_birthday
+    user.phone_number = body.phone_number
+    user.birthday_now = birthday_in_this_year(body.day_birthday)
     db.commit()
     db.refresh(user)
     return user
 
 @app.patch("/users/{user_id}", response_model=UserResponse, tags=["users"])
-async def update_user(body:UserModel, user_id: int = Path(description="The ID of the user", ge=1), db: Session = Depends(get_db)):
+async def update_user(email: str = None, first_name: str = None, last_name: str = None, day_birthday: date = None, phone_number: str = None, user_id: int = Path(description="The ID of the user", ge=1), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
-    user.email = body.email
+    if (email is not None)and (db.query(User).filter(User.email == email).first() is not None):
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "This email is exists!")
+    if email:
+        user.email = email
+    if first_name:
+        user.first_name = first_name
+    if last_name:
+        user.last_name = last_name
+    if day_birthday:
+        user.day_birthday = day_birthday
+        user.birthday_now = birthday_in_this_year(day_birthday)
+    if phone_number:
+        user.phone_number = phone_number
     db.commit()
     db.refresh(user)
     return user

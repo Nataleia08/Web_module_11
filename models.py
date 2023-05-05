@@ -1,14 +1,5 @@
-from sqlalchemy import Boolean, Column, func, DateTime, ForeignKey, Integer, String, Date
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, func, DateTime, Integer, String, Date
 from db import Base, engine
-from repository.users import birthday_in_this_year
-
-# Ім'я
-# Прізвище
-# Електронна адреса
-# Номер телефону
-# День народження
-# Додаткові дані (необов'язково)
 
 class User(Base):
     __tablename__ = "users"
