@@ -5,6 +5,8 @@ from schemas import UserResponse, UserModel
 from db import get_db
 from models import User
 from datetime import datetime, timedelta
+from repository.users import birthday_in_this_year
+from typing import List
 
 app = FastAPI()
 
@@ -30,27 +32,28 @@ async def create_user(body:UserModel, db:Session = Depends(get_db)):
     if user:
         raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "This email is exists!")
     user = User(**body.dict())
+    user.birthday_now = birthday_in_this_year(user.day_birthday)
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
 
 
-@app.get("/users")
+@app.get("/users", response_model=List[UserResponse])
 async def read_users(skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
 
-@app.get("/users/{user_id}")
-async def read_user(user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+@app.get("/users/{user_id}", response_model=UserResponse)
+async def read_user(user_id: int = Path(description="The ID of the user", ge=1), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
     return user
 
-@app.put("/users/{user_id}")
-async def update_user(body:UserModel, user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+@app.put("/users/{user_id}", response_model=UserResponse)
+async def update_user(body:UserModel, user_id: int = Path(description="The ID of the user", ge=1), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
@@ -59,8 +62,8 @@ async def update_user(body:UserModel, user_id: int = Path(ge=1), db: Session = D
     db.refresh(user)
     return user
 
-@app.patch("/users/{user_id}")
-async def update_user(body:UserModel, user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+@app.patch("/users/{user_id}", response_model=UserResponse)
+async def update_user(body:UserModel, user_id: int = Path(description="The ID of the user", ge=1), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
@@ -71,7 +74,7 @@ async def update_user(body:UserModel, user_id: int = Path(ge=1), db: Session = D
 
 
 @app.delete("/users/{user_id}")
-async def delete_user(user_id: int = Path(ge=1), db: Session = Depends(get_db)):
+async def delete_user(user_id: int = Path(description="The ID of the user", ge=1), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
@@ -79,27 +82,32 @@ async def delete_user(user_id: int = Path(ge=1), db: Session = Depends(get_db)):
     db.commit()
 
 
-@app.get("/birthdays")
+@app.get("/birthdays", response_model=List[UserResponse])
 async def read_users(days:int = 7, skip: int = 0, limit: int = Query(default=10, le=100, ge=10), db: Session = Depends(get_db)):
     list_users = []
     for i in range(days):
-        new_days = (datetime.now() + timedelta(days=i)).day
-        users = db.query(User).filter(datetime(year=2023, month=User.day_birthday.month, day=User.day_birthday.day).day == new_days).offset(skip).limit(limit).all()
+        new_days = (datetime.now() + timedelta(days=i)).date()
+        users = db.query(User).filter(User.birthday_now == new_days).all()
         list_users.append(users)
     return list_users
 
 
-@app.get("/search/email")
+@app.get("/search/email", response_model=List[UserResponse])
 async def search_users(email: str, db: Session = Depends(get_db)):
     users = db.query(User).filter(User.email == email).all()
     return users
 
-@app.get("/search/first_name")
+@app.get("/search/first_name", response_model=List[UserResponse])
 async def search_users(first_name: str, db: Session = Depends(get_db)):
     users = db.query(User).filter(User.first_name == first_name).all()
     return users
 
-@app.get("/search/last_name")
+@app.get("/search/last_name", response_model=List[UserResponse])
 async def search_users(last_name: str, db: Session = Depends(get_db)):
     users = db.query(User).filter(User.last_name == last_name).all()
+    return users
+
+@app.get("/search", response_model=List[UserResponse])
+async def search_users(email: str, first_name: str, last_name: str, db: Session = Depends(get_db)):
+    users = db.query(User).filter((User.email == email) and (User.last_name == last_name) and (User.first_name == first_name)).all()
     return users

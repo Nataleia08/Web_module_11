@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr, PastDate, Field
+from pydantic import BaseModel, EmailStr, PastDate, Field, FutureDate
+from datetime import datetime, date
 
 class UserModel(BaseModel):
     email: EmailStr
@@ -7,6 +8,7 @@ class UserModel(BaseModel):
     phone_number: str
     day_birthday: PastDate
 
+
 class UserResponse(BaseModel):
     id: int = Field(default=1, ge=1)
     email: EmailStr
@@ -14,7 +16,10 @@ class UserResponse(BaseModel):
     last_name: str
     phone_number: str
     day_birthday: PastDate
+    birthday_now: date
     is_active: bool
+    created_at: datetime
+    update_at: datetime
 
     class Config():
         orm_mode = True
