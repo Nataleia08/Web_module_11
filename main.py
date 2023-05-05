@@ -53,7 +53,7 @@ async def update_user(body:UserModel, user_id: int = Path(description="The ID of
     user.last_name = body.last_name
     user.day_birthday = body.day_birthday
     user.phone_number = body.phone_number
-    user.birthday_now = birthday_in_this_year(body.day_birthday)
+    user.birthday_now = birthday_in_this_year(user.day_birthday)
     db.commit()
     db.refresh(user)
     return user
@@ -116,6 +116,25 @@ async def search_users(last_name: str, db: Session = Depends(get_db)):
     return users
 
 @app.get("/search", response_model=List[UserResponse], tags=["search"])
-async def search_users(email: str, first_name: str, last_name: str, db: Session = Depends(get_db)):
-    users = db.query(User).filter((User.email == email) and (User.last_name == last_name) and (User.first_name == first_name)).all()
+async def search_users(email: str = None, first_name: str = None, last_name: str = None, db: Session = Depends(get_db)):
+    if email and first_name and last_name:
+        users = db.query(User).filter((User.email == email) and (User.last_name == last_name) and (User.first_name == first_name)).all()
+    elif not email:
+        if first_name and last_name:
+            users = db.query(User).filter((User.last_name == last_name) and (User.first_name == first_name)).all()
+        elif first_name:
+            users = db.query(User).filter((User.first_name == first_name)).all()
+        elif last_name:
+            users = db.query(User).filter((User.last_name == last_name)).all()
+    else:
+        if first_name:
+            users = db.query(User).filter(
+                (User.email == email) and (User.first_name == first_name)).all()
+        elif last_name:
+            users = db.query(User).filter(
+                (User.email == email) and (User.last_name == last_name)).all()
+        else:
+            users = db.query(User).filter(User.email == email).all()
+    if (email is None) and (first_name is None) and (last_name is None):
+        users = db.query(User).all()
     return users
